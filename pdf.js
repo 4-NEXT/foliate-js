@@ -1,4 +1,4 @@
-const pdfjsPath = path => new URL(`vendor/pdfjs/${path}`, import.meta.url).toString()
+const pdfjsPath = (path) => new URL(`./vendor/pdfjs/${path}`, import.meta.url).toString()
 
 import './vendor/pdfjs/pdf.mjs'
 const pdfjsLib = globalThis.pdfjsLib
@@ -6,11 +6,24 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsPath('pdf.worker.mjs')
 
 const fetchText = async url => await (await fetch(url)).text()
 
-// https://github.com/mozilla/pdf.js/blob/642b9a5ae67ef642b9a8808fd9efd447e8c350e2/web/text_layer_builder.css
-const textLayerBuilderCSS = await fetchText(pdfjsPath('text_layer_builder.css'))
+// Initialize CSS variables
+let textLayerBuilderCSS = null
+let annotationLayerBuilderCSS = null
 
-// https://github.com/mozilla/pdf.js/blob/642b9a5ae67ef642b9a8808fd9efd447e8c350e2/web/annotation_layer_builder.css
-const annotationLayerBuilderCSS = await fetchText(pdfjsPath('annotation_layer_builder.css'))
+// Function to load CSS files
+const loadCSS = async () => {
+  if (!textLayerBuilderCSS) {
+    // https://github.com/mozilla/pdf.js/blob/642b9a5ae67ef642b9a8808fd9efd447e8c350e2/web/text_layer_builder.css
+    textLayerBuilderCSS = await fetchText(pdfjsPath('text_layer_builder.css'))
+  }
+
+  if (!annotationLayerBuilderCSS) {
+    // https://github.com/mozilla/pdf.js/blob/642b9a5ae67ef642b9a8808fd9efd447e8c350e2/web/annotation_layer_builder.css
+    annotationLayerBuilderCSS = await fetchText(pdfjsPath('annotation_layer_builder.css'))
+  }
+
+  return { textLayerBuilderCSS, annotationLayerBuilderCSS }
+}
 
 const render = async (page, doc, zoom) => {
     const scale = zoom * devicePixelRatio
@@ -68,6 +81,9 @@ const render = async (page, doc, zoom) => {
 }
 
 const renderPage = async (page, getImageBlob) => {
+    // Ensure CSS is loaded
+    await loadCSS()
+
     const viewport = page.getViewport({ scale: 1 })
     if (getImageBlob) {
         const canvas = document.createElement('canvas')
