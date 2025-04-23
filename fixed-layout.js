@@ -43,6 +43,7 @@ export class FixedLayout extends HTMLElement {
     #center
     #side
     #zoom
+    #touchState
     constructor() {
         super()
 
@@ -58,7 +59,72 @@ export class FixedLayout extends HTMLElement {
         }`)
 
         this.#observer.observe(this)
+
+        // タッチイベントの初期化
+        const opts = { passive: false }
+        this.addEventListener('touchstart', this.#onTouchStart.bind(this), opts)
+        this.addEventListener('touchmove', this.#onTouchMove.bind(this), opts)
+        this.addEventListener('touchend', this.#onTouchEnd.bind(this))
+        this.addEventListener('load', ({ detail: { doc } }) => {
+            doc.addEventListener('touchstart', this.#onTouchStart.bind(this), opts)
+            doc.addEventListener('touchmove', this.#onTouchMove.bind(this), opts)
+            doc.addEventListener('touchend', this.#onTouchEnd.bind(this))
+        })
     }
+
+    // タッチ開始時の処理
+    #onTouchStart(e) {
+        const touch = e.changedTouches[0]
+        this.#touchState = {
+            x: touch?.screenX,
+            y: touch?.screenY,
+            t: e.timeStamp,
+            moved: false
+        }
+    }
+
+    // タッチ移動時の処理
+    #onTouchMove(e) {
+        if (!this.#touchState) return
+
+        const touch = e.changedTouches[0]
+        const x = touch.screenX
+        const y = touch.screenY
+        const dx = this.#touchState.x - x
+        const dy = this.#touchState.y - y
+
+        // 移動距離が一定以上あれば移動フラグを立てる
+        if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+            this.#touchState.moved = true
+        }
+    }
+
+    // タッチ終了時の処理
+    #onTouchEnd(e) {
+        console.log('touchend')
+        if (!this.#touchState || !this.#touchState.moved) return
+
+        const touch = e.changedTouches[0]
+        const x = touch.screenX
+        const y = touch.screenY
+        const dx = this.#touchState.x - x
+        const dy = this.#touchState.y - y
+
+        // 横方向の移動が縦方向より大きい場合のみページめくり
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+            // 右から左へのスワイプ（次のページ）
+            if (dx > 0) {
+                this.rtl ? this.prev() : this.next()
+            }
+            // 左から右へのスワイプ（前のページ）
+            else {
+                this.rtl ? this.next() : this.prev()
+            }
+        }
+
+        this.#touchState = null
+    }
+
     attributeChangedCallback(name, _, value) {
         switch (name) {
             case 'zoom':
