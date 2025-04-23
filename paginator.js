@@ -288,6 +288,10 @@ class View {
             'column-width': 'auto',
             'height': 'auto',
             'width': 'auto',
+            'user-select': 'none',
+            '-webkit-user-select': 'none',
+            '-moz-user-select': 'none',
+            '-ms-user-select': 'none',
         })
         setStylesImportant(doc.body, {
             [vertical ? 'max-height' : 'max-width']: `${columnWidth}px`,
@@ -319,6 +323,10 @@ class View {
             'min-height': 'none', 'min-width': 'none',
             // fix glyph clipping in WebKit
             '-webkit-line-box-contain': 'block glyphs replaced',
+            'user-select': 'none',
+            '-webkit-user-select': 'none',
+            '-moz-user-select': 'none',
+            '-ms-user-select': 'none',
         })
         setStylesImportant(doc.body, {
             'max-height': 'none',
