@@ -819,10 +819,11 @@ export class Paginator extends HTMLElement {
             // - 右から左へのスワイプ（velocity > 0）で前のページ
             // - 左から右へのスワイプ（velocity < 0）で次のページ
 
+            // FIXME: rtl読み込み判定がおかしいが、一旦無理やり
             if ((velocity > 0 && !this.#rtl) || (velocity < 0 && this.#rtl)) {
-                this.next();
-            } else {
                 this.prev();
+            } else {
+                this.next();
             }
         } else {
             // 速度が小さい場合は現在のページに留まる（スナップ処理）
