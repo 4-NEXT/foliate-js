@@ -101,7 +101,6 @@ export class FixedLayout extends HTMLElement {
 
     // タッチ終了時の処理
     #onTouchEnd(e) {
-        console.log('touchend')
         if (!this.#touchState || !this.#touchState.moved) return
 
         const touch = e.changedTouches[0]

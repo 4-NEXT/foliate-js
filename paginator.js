@@ -800,23 +800,39 @@ export class Paginator extends HTMLElement {
             element[scrollProp] + delta))
     }
     snap(vx, vy) {
-        const velocity = this.#vertical ? vy : vx
-        const [offset, a, b] = this.#scrollBounds
-        const { start, end, pages, size } = this
-        const min = Math.abs(offset) - a
-        const max = Math.abs(offset) + b
-        const d = velocity * (this.#rtl ? -size : size)
-        const page = Math.floor(
-            Math.max(min, Math.min(max, (start + end) / 2
-                + (isNaN(d) ? 0 : d))) / size)
+        // 常に横方向の速度のみを使用する（縦書きでも横スワイプのみ許可）
+        const velocity = vx
 
-        this.#scrollToPage(page, 'snap').then(() => {
-            const dir = page <= 0 ? -1 : page >= pages - 1 ? 1 : null
-            if (dir) return this.#goTo({
-                index: this.#adjacentIndex(dir),
-                anchor: dir < 0 ? () => 1 : () => 0,
-            })
-        })
+        // 速度の絶対値が一定以上の場合のみページめくりを実行
+        const VELOCITY_THRESHOLD = 0.5; // 速度のしきい値（調整可能）
+
+        if (Math.abs(velocity) >= VELOCITY_THRESHOLD) {
+            // 速度の符号と方向の関係：
+            // velocity > 0: 右から左へのスワイプ（指を右から左に動かす）
+            // velocity < 0: 左から右へのスワイプ（指を左から右に動かす）
+
+            // 通常のLTRモード：
+            // - 右から左へのスワイプ（velocity > 0）で次のページ
+            // - 左から右へのスワイプ（velocity < 0）で前のページ
+
+            // RTLモード：
+            // - 右から左へのスワイプ（velocity > 0）で前のページ
+            // - 左から右へのスワイプ（velocity < 0）で次のページ
+
+            if ((velocity > 0 && !this.#rtl) || (velocity < 0 && this.#rtl)) {
+                this.next();
+            } else {
+                this.prev();
+            }
+        } else {
+            // 速度が小さい場合は現在のページに留まる（スナップ処理）
+            const [offset, a, b] = this.#scrollBounds
+            const { start, end, pages, size } = this
+            const min = Math.abs(offset) - a
+            const max = Math.abs(offset) + b
+            const page = Math.floor(Math.max(min, Math.min(max, (start + end) / 2)) / size)
+            this.#scrollToPage(page, 'snap')
+        }
     }
     #onTouchStart(e) {
         const touch = e.changedTouches[0]
@@ -845,19 +861,25 @@ export class Paginator extends HTMLElement {
         state.t = e.timeStamp
         state.vx = dx / dt
         state.vy = dy / dt
+
+        // 縦書きモードでも横方向のスクロールのみを許可
+        // 縦方向の移動を無視して横方向のみスクロール
         this.#touchScrolled = true
-        this.scrollBy(dx, dy)
+        this.scrollBy(dx, 0) // dyを0にして縦方向のスクロールを無効化
     }
     #onTouchEnd() {
         this.#touchScrolled = false
         if (this.scrolled) return
 
-        // XXX: Firefox seems to report scale as 1... sometimes...?
-        // at this point I'm basically throwing `requestAnimationFrame` at
-        // anything that doesn't work
+        // タッチ状態がない場合は何もしない
+        if (!this.#touchState) return
+
+        // 常に横方向の速度のみを使用してスナップ処理を行う
         requestAnimationFrame(() => {
-            if (globalThis.visualViewport.scale === 1)
-                this.snap(this.#touchState.vx, this.#touchState.vy)
+            if (globalThis.visualViewport.scale === 1) {
+                // 横方向の速度のみを渡す（縦方向の速度は無視）
+                this.snap(this.#touchState.vx, 0)
+            }
         })
     }
     // allows one to process rects as if they were LTR and horizontal
