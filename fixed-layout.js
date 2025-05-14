@@ -368,6 +368,9 @@ export class FixedLayout extends HTMLElement {
         if (s) this.#reportLocation('page')
         else return this.goToSpread(this.#index - 1, this.rtl ? 'left' : 'right', 'page')
     }
+    get atEnd() {
+        return this.#index === this.#spreads.length - 1
+    }
     getContents() {
         return Array.from(this.#root.querySelectorAll('iframe'), frame => ({
             doc: frame.contentDocument,
