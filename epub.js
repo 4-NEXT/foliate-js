@@ -1,4 +1,5 @@
 import * as CFI from './epubcfi.js'
+import './polyfill.js'
 
 const NS = {
     CONTAINER: 'urn:oasis:names:tc:opendocument:xmlns:container',
