@@ -871,6 +871,9 @@ export class Paginator extends HTMLElement {
         this.scrollBy(dx, 0) // dyを0にして縦方向のスクロールを無効化
     }
     #onTouchEnd() {
+        if (!this.#touchScrolled) {
+            this.dispatchEvent(new Event('simple-pointer-up'))
+        }
         this.#touchScrolled = false
         if (this.scrolled) return
 

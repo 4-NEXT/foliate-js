@@ -101,7 +101,13 @@ export class FixedLayout extends HTMLElement {
 
     // タッチ終了時の処理
     #onTouchEnd(e) {
-        if (!this.#touchState || !this.#touchState.moved) return
+        if (!this.#touchState) return
+
+        // シンプルなタップの場合（ページめくりなどの動作以外）のみイベントを発火
+        if (!this.#touchState.moved) {
+            this.dispatchEvent(new Event('simple-pointer-up'))
+            return
+        }
 
         const touch = e.changedTouches[0]
         const x = touch.screenX
