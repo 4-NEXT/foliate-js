@@ -425,6 +425,7 @@ export class Paginator extends HTMLElement {
     static observedAttributes = [
         'flow', 'gap', 'margin',
         'max-inline-size', 'max-block-size', 'max-column-count',
+        'free-preview-page-count',
     ]
     #root = this.attachShadow({ mode: 'closed' })
     #observer = new ResizeObserver(() => this.render())
@@ -449,6 +450,8 @@ export class Paginator extends HTMLElement {
     #touchState
     #touchScrolled
     #lastVisibleRange
+    // nullの場合は制限なし
+    #freePreviewPageCount = null
     constructor() {
         super()
         this.#root.innerHTML = `<style>
@@ -640,6 +643,9 @@ export class Paginator extends HTMLElement {
                 // needs explicit `render()` as it doesn't necessarily resize
                 this.#top.style.setProperty('--_' + name, value)
                 this.render()
+                break
+            case 'free-preview-page-count':
+                this.#freePreviewPageCount = value === null ? null : parseInt(value, 10)
                 break
         }
     }
@@ -938,6 +944,11 @@ export class Paginator extends HTMLElement {
         }
     }
     async #scrollToPage(page, reason, smooth) {
+        if (this.#freePreviewPageCount !== null && page > this.#freePreviewPageCount) {
+            this.dispatchEvent(new Event("out-of-free-preview"))
+            return
+        }
+
         const offset = this.size * (this.#rtl ? -page : page)
         return this.#scrollTo(offset, reason, smooth)
     }

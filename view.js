@@ -261,6 +261,7 @@ export class View extends HTMLElement {
         this.renderer.addEventListener('relocate', e => this.#onRelocate(e.detail))
         this.renderer.addEventListener('reached-start', () => this.#onReachedStart())
         this.renderer.addEventListener('reached-end', () => this.#onReachedEnd())
+        this.renderer.addEventListener('out-of-free-preview', () => this.#onOutOfFreePreview())
         this.renderer.addEventListener('simple-pointer-up', () => this.#onSimplePointerUp())
         this.renderer.addEventListener('create-overlayer', e =>
             e.detail.attach(this.#createOverlayer(e.detail)))
@@ -353,6 +354,9 @@ export class View extends HTMLElement {
     }
     #onReachedEnd() {
         this.#emit('reached-end')
+    }
+    #onOutOfFreePreview() {
+        this.#emit('out-of-free-preview')
     }
     #onSimplePointerUp() {
         this.#emit('simple-pointer-up')

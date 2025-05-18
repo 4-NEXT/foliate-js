@@ -30,7 +30,7 @@ const getViewport = (doc, viewport) => {
 }
 
 export class FixedLayout extends HTMLElement {
-    static observedAttributes = ['zoom']
+    static observedAttributes = ['free-preview-page-count', 'zoom']
     #root = this.attachShadow({ mode: 'closed' })
     #observer = new ResizeObserver(() => this.#render())
     #spreads
@@ -44,6 +44,8 @@ export class FixedLayout extends HTMLElement {
     #side
     #zoom
     #touchState
+    // nullの場合は制限なし
+    #freePreviewPageCount = null
     constructor() {
         super()
 
@@ -136,6 +138,9 @@ export class FixedLayout extends HTMLElement {
                 this.#zoom = value !== 'fit-width' && value !== 'fit-page'
                     ? parseFloat(value) : value
                 this.#render()
+                break
+            case 'free-preview-page-count':
+                this.#freePreviewPageCount = value === null ? null : parseInt(value, 10)
                 break
         }
     }
@@ -331,6 +336,13 @@ export class FixedLayout extends HTMLElement {
     }
     async goToSpread(index, side, reason) {
         if (index < 0 || index > this.#spreads.length - 1) return
+
+        // 最大ページ番号が設定されている場合、ページ番号をチェック
+        if (this.#freePreviewPageCount !== null && index > this.#freePreviewPageCount) {
+            this.dispatchEvent(new Event("out-of-free-preview"))
+            return
+        }
+
         if (index === this.#index) {
             this.#render(side)
             return
