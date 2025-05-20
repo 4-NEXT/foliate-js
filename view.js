@@ -88,34 +88,14 @@ export const makeBook = async file => {
     else if (await isZip(file)) {
         const loader = await makeZipLoader(file)
         if (isCBZ(file)) {
-            const { makeComicBook } = await import('./comic-book.js')
-            book = makeComicBook(loader, file)
+            throw new Error('CBZ is not supported')
         }
         else if (isFBZ(file)) {
-            const { makeFB2 } = await import('./fb2.js')
-            const { entries } = loader
-            const entry = entries.find(entry => entry.filename.endsWith('.fb2'))
-            const blob = await loader.loadBlob((entry ?? entries[0]).filename)
-            book = await makeFB2(blob)
+            throw new Error('FBZ is not supported')
         }
         else {
             const { EPUB } = await import('./epub.js')
             book = await new EPUB(loader).init()
-        }
-    }
-    else if (await isPDF(file)) {
-        const { makePDF } = await import('./pdf.js')
-        book = await makePDF(file)
-    }
-    else {
-        const { isMOBI, MOBI } = await import('./mobi.js')
-        if (await isMOBI(file)) {
-            const fflate = await import('./vendor/fflate.js')
-            book = await new MOBI({ unzlib: fflate.unzlibSync }).open(file)
-        }
-        else if (isFB2(file)) {
-            const { makeFB2 } = await import('./fb2.js')
-            book = await makeFB2(file)
         }
     }
     if (!book) throw new UnsupportedTypeError('File type not supported')
